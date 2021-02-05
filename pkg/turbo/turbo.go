@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
-
-	"github.com/gorilla/websocket"
 )
 
 type Action string
@@ -35,8 +33,8 @@ func (h *Turbo) Send(rw http.ResponseWriter) {
 	rw.Header().Add("Content-type", "text/vnd.turbo-stream.html")
 	h.Template.Execute(rw, h)
 }
-func (h *Turbo) SendSocket(c *websocket.Conn) {
+func (h *Turbo) sendSocket(hub *Hub) {
 	var buf bytes.Buffer
 	h.Template.Execute(&buf, h)
-	c.WriteMessage(1, []byte(buf.String()))
+	hub.broadcast <- buf.Bytes()
 }

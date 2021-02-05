@@ -16,7 +16,11 @@ func main() {
 	mux := chi.NewMux()
 	mux.Get("/", getIndex)
 
-	mux.Get("/socket", getSocket)
+	hub := turbo.NewHub()
+	go hub.Run()
+	mux.Get("/socket", func(rw http.ResponseWriter, req *http.Request) {
+		getSocket(hub, rw, req)
+	})
 	http.ListenAndServe(":8000", mux)
 }
 func getIndex(rw http.ResponseWriter, req *http.Request) {
@@ -24,7 +28,7 @@ func getIndex(rw http.ResponseWriter, req *http.Request) {
 	temp.Execute(rw, nil)
 }
 
-func getSocket(rw http.ResponseWriter, req *http.Request) {
+func getSocket(hub *turbo.Hub, rw http.ResponseWriter, req *http.Request) {
 
 	parsed, err := template.New("main").Parse(temp)
 	if err != nil {
@@ -40,7 +44,7 @@ func getSocket(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	go sendMessages(tempChan)
-	appendMessage.Stream(rw, req)
+	appendMessage.Stream(hub, rw, req)
 
 }
 func sendMessages(data chan interface{}) {

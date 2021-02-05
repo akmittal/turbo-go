@@ -1,0 +1,28 @@
+{{define "base"}}
+<!doctype html>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Current time</title>
+  </head>
+
+  <body>
+   <main>
+{{template "main" .}}
+   </main>
+  </body>
+
+  <script type="module">
+    import * as hotwiredTurbo from 'https://cdn.skypack.dev/@hotwired/turbo';
+    const es = new WebSocket('ws://localhost:8000/socket');
+    hotwiredTurbo.connectStreamSource(es);
+  </script>
+</html>
+
+{{end}}
+
+
+

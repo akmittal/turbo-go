@@ -2,6 +2,7 @@ package turbo
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/akmittal/turbo-go/internal/util"
@@ -17,19 +18,23 @@ type Stream struct {
 	Data     chan interface{}
 }
 
-func (s *Stream) Stream(rw http.ResponseWriter, req *http.Request) {
+func (s *Stream) Stream(hub *Hub, rw http.ResponseWriter, req *http.Request) {
 
 	var turboTemplate, err = util.WrapTemplateInTurbo(s.Template.Name())
 	if err != nil {
 		http.Error(rw, "Error", 500)
 	}
-	c, err := upgrader.Upgrade(rw, req, nil)
-	defer c.Close()
+	conn, err := upgrader.Upgrade(rw, req, nil)
 	if err != nil {
-		http.Error(rw, "Error", 500)
+		log.Println(err)
+		return
 	}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	hub.register <- client
 
 	temp, err := s.Template.New("userTemplate").Parse(turboTemplate)
+	go client.writePump()
+
 	if err != nil {
 		http.Error(rw, "Error parsing template", 500)
 	}
@@ -41,7 +46,7 @@ func (s *Stream) Stream(rw http.ResponseWriter, req *http.Request) {
 			Target:   s.Target,
 			Data:     datum,
 		}
-		turbo.SendSocket(c)
+		turbo.sendSocket(hub)
 
 	}
 }

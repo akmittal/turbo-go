@@ -1,0 +1,20 @@
+
+
+
+
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
+
+<h1>Create Rooom</h1>
+<form method="POST" action="/room">
+<input type="text" name="name" placeholder="Room name">
+<input type="submit">
+</form>
+
+
+
+
+{{end}}
