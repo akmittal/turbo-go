@@ -1,70 +1,69 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
-	"time"
 
-	"github.com/akmittal/turbo-go/examples/hotwire/room"
+	"github.com/akmittal/turbo-go/examples/hotwire/message"
+	"github.com/akmittal/turbo-go/pkg/turbo"
 	"github.com/go-chi/chi"
 )
 
-var rooms []room.Room
+var messages []message.Message
 
 func main() {
 
 	mux := chi.NewMux()
 	mux.Get("/", getIndex)
-	mux.Get("/room", getRooms)
-	mux.Post("/room", createRoom)
-	mux.Get("/room/create", createRoomPage)
 
-	mux.Get("/socket", getSocket)
+	hub := turbo.NewHub()
+	msgChan := make(chan interface{})
+	mux.Post("/send", func(rw http.ResponseWriter, req *http.Request) {
+		sendMessage(msgChan, hub, rw, req)
+	})
+	go hub.Run()
+	mux.Get("/socket", func(rw http.ResponseWriter, req *http.Request) {
+		getSocket(msgChan, hub, rw, req)
+	})
 	http.ListenAndServe(":8000", mux)
 }
-func getRooms(rw http.ResponseWriter, req *http.Request) {
-	temp, _ := template.ParseFiles("examples/hotwire/templates/rooms.temp.html", "examples/hotwire/templates/base.temp.html")
-	temp.Execute(rw, rooms)
+func getIndex(rw http.ResponseWriter, req *http.Request) {
+	temp, err := template.ParseFiles("examples/hotwire/templates/messages.temp.html", "examples/hotwire/templates/base.temp.html")
+	if err != nil {
+		http.Error(rw, "Error", 400)
+	}
+	temp.Execute(rw, messages)
 }
-func createRoom(rw http.ResponseWriter, req *http.Request) {
+func sendMessage(msgChan chan interface{}, hub *turbo.Hub, rw http.ResponseWriter, req *http.Request) {
 	if err := req.ParseForm(); err != nil {
-
+		http.Error(rw, err.Error(), 401)
 		return
 	}
+
 	// fmt.Fprintf(rw, "Post from website! r.PostFrom = %v\n", req.PostForm)
-	var room room.Room
-	room.Name = req.FormValue("name")
+	var msg message.Message
+	msg.Text = req.FormValue("message")
 
-	rooms = append(rooms, room)
-	http.Redirect(rw, req, "/room", 200)
-}
-func createRoomPage(rw http.ResponseWriter, req *http.Request) {
-	temp, _ := template.ParseFiles("examples/hotwire/templates/create-room.temp.html", "examples/hotwire/templates/base.temp.html")
-	temp.Execute(rw, rooms)
-}
-func getIndex(rw http.ResponseWriter, req *http.Request) {
-	temp, _ := template.ParseFiles("examples/timestamp/index.temp.html")
-	temp.Execute(rw, nil)
-}
-
-func getSocket(rw http.ResponseWriter, req *http.Request) {
-
-	// tempChan := make(chan interface{})
-	// appendMessage := turbo.Stream{
-	// 	Action:   turbo.UPDATE,
-	// 	Template: parsed,
-	// 	Target:   "currenttime",
-	// 	Data:     tempChan,
-	// }
-
-	// go sendMessages(tempChan)
-	// appendMessage.Stream(rw, req)
+	messages = append(messages, msg)
+	go func() {
+		msgChan <- msg
+	}()
+	fmt.Fprintf(rw, "%s", "Done")
 
 }
-func sendMessages(data chan interface{}) {
-	for {
-		data <- time.Now().Format("January 02, 2006 15:04:05")
-		time.Sleep(time.Second)
+
+func getSocket(msgChan chan interface{}, hub *turbo.Hub, rw http.ResponseWriter, req *http.Request) {
+	temp, _ := template.ParseFiles("examples/hotwire/templates/messages.temp.html")
+	messageTemp := temp.Lookup("message")
+
+	appendMessage := turbo.Stream{
+		Action:   turbo.APPEND,
+		Template: messageTemp,
+		Target:   "messages",
+		Data:     msgChan,
 	}
+
+	appendMessage.Stream(hub, rw, req)
 
 }

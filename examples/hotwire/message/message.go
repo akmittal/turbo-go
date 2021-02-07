@@ -1,7 +1,7 @@
 package message
 
 type Message struct {
-	text string
+	Text string
 }
 
 func New(text string) Message {

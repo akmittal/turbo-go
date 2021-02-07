@@ -1,0 +1,17 @@
+{{template "base" .}} {{define "title"}}Home{{end}} {{define "main"}}
+<h1>Messages</h1>
+
+<div id="messages">{{range .}} 
+{{template "message" .}} 
+
+{{end}}</div>
+<form method="POST" action="/send">
+  <input type="text" name="message" placeholder="New Message">
+  <input type="submit">
+</form>
+
+{{end}}
+{{define "message"}}
+<div>{{.}}</div>
+{{end}}
+
