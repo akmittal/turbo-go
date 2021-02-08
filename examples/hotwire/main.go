@@ -65,5 +65,4 @@ func getSocket(msgChan chan interface{}, hub *turbo.Hub, rw http.ResponseWriter,
 	}
 
 	appendMessage.Stream(hub, rw, req)
-
 }
