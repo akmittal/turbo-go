@@ -15,7 +15,7 @@ go get github.com/akmittal/turbo-go
 ## API
 ```github.com/akmittal/turbo-go/pkg/turbo```
 
-Send single templae update
+Send single template update
 ``` go
 messageTemp, err := template.New("message").parse(`<div>{{.}}</div>`)
 data := time.Now()
@@ -28,10 +28,11 @@ turbo := turbo.Turbo{
 ```
 
 Send stream of templates 
-Create hub
+
 ``` go 
 func main(){
-	hub := turbo.NewHub()
+	// Create hub
+    hub := turbo.NewHub()
     go hub.Run()
     mux.Get("/socket", func(rw http.ResponseWriter, req *http.Request) {
 		getSocket(msgChan, hub, rw, req)
