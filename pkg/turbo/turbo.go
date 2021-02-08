@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Turbo Action type, Value can be APPEND|PREPEND|REPLACE|UPDATE|REMOVE
 type Action string
 
 const (
@@ -18,6 +19,7 @@ const (
 
 var parsedTemp *template.Template
 
+//Turbo Create a new Turbo update
 type Turbo struct {
 	Action   Action
 	Template *template.Template
@@ -29,6 +31,7 @@ func (h *Turbo) SetHeader(rw http.ResponseWriter) {
 	rw.Header().Add("Content-type", "text/vnd.turbo-stream.html")
 }
 
+//Send sends turbo template as HTTP response
 func (h *Turbo) Send(rw http.ResponseWriter) {
 	rw.Header().Add("Content-type", "text/vnd.turbo-stream.html")
 	h.Template.Execute(rw, h)

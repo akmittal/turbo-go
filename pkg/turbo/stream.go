@@ -10,7 +10,7 @@ import (
 )
 
 var upgrader = websocket.Upgrader{} // use default options
-
+// Stream Create a new Turbo stream with Action and Data channel.
 type Stream struct {
 	Action   Action
 	Template *template.Template
@@ -18,6 +18,7 @@ type Stream struct {
 	Data     chan interface{}
 }
 
+// Stream start streaming messages to all hub clients
 func (s *Stream) Stream(hub *Hub, rw http.ResponseWriter, req *http.Request) {
 
 	var turboTemplate, err = util.WrapTemplateInTurbo(s.Template.Name())
